@@ -1,0 +1,406 @@
+{
+  "additionalProperties": false,
+  "type": "object",
+  "properties": {
+    "policy_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_number": { "type": "string", "description": "Policy number / certificate number." },
+        "product_name": { "type": "string", "description": "Product or plan name." },
+        "plan_variant": { "type": "string", "description": "Plan variant or sub-plan (e.g. Niva Bupa plan variant)." },
+        "plan_type": { "type": "string", "description": "Individual / Family Floater / Group / Top-up / Super Top-up." },
+        "policy_category": { "type": "string", "description": "Insurer policy category label, if stated (Star Health)." },
+        "business_type": { "type": "string", "description": "New business / Renewal / Portability (TATA AIG)." },
+        "uin": { "type": "string", "description": "IRDAI Unique Identification Number of the product." },
+        "insurer_name": { "type": "string", "description": "Insurance company legal name." },
+        "issuing_office": { "type": "string", "description": "Branch / servicing / issuing office name." },
+        "issuing_office_address": { "type": "string", "description": "Address of the issuing office." },
+        "policy_period_start": { "type": "string", "description": "Policy start date (DD/MM/YYYY)." },
+        "policy_period_end": { "type": "string", "description": "Policy end / expiry date (DD/MM/YYYY)." },
+        "policy_tenure": { "type": "string", "description": "Policy tenure / duration (1/2/3 years)." },
+        "premium_payment_frequency": { "type": "string", "description": "Annual / Half-yearly / Monthly." },
+        "previous_policy_number": { "type": "string", "description": "Previous policy number if this is a renewal." },
+        "proposal_number": { "type": "string", "description": "Proposal / application number." },
+        "client_id": { "type": "string", "description": "Client ID / customer code." },
+        "intermediary_name": { "type": "string", "description": "Agent / intermediary name." },
+        "intermediary_code": { "type": "string", "description": "Agent / intermediary code." },
+        "intermediary_contact": { "type": "string", "description": "Agent / intermediary contact number." },
+        "gstin": { "type": "string", "description": "GSTIN of the insurer." },
+        "hsn_sac_code": { "type": "string", "description": "HSN / SAC code." },
+        "premium_payment_zone": { "type": "string", "description": "Premium payment zone (Zone A/B/C — TATA AIG)." },
+        "location_of_policy": { "type": "string", "description": "State / city where the policy was issued (Niva Bupa)." },
+        "eia_number": { "type": "string", "description": "Electronic Insurance Account (eIA) number." },
+        "insurance_repository": { "type": "string", "description": "Insurance Repository name." }
+      },
+      "required": [
+        "policy_number",
+        "product_name",
+        "plan_type",
+        "insurer_name",
+        "policy_period_start",
+        "policy_period_end",
+        "premium_payment_frequency",
+        "gstin",
+        "hsn_sac_code"
+      ]
+    },
+
+    "policyholder_and_members": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "proposer_name": { "type": "string", "description": "Proposer / policyholder name." },
+        "proposer_address": { "type": "string", "description": "Proposer / policyholder address." },
+        "members": {
+          "type": "array",
+          "description": "One entry per insured member listed in the policy schedule.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "sl_no": { "type": "string", "description": "Serial number of the member in the table." },
+              "member_id": { "type": "string", "description": "Member ID / certificate number." },
+              "member_name": { "type": "string", "description": "Full name of the insured member." },
+              "dob": { "type": "string", "description": "Date of birth (DD/MM/YYYY)." },
+              "age": { "type": "string", "description": "Age in years." },
+              "gender": { "type": "string", "description": "Gender of the member." },
+              "relationship": { "type": "string", "description": "Relationship with the policyholder." },
+              "pre_existing_conditions": { "type": "string", "description": "Pre-existing conditions / diseases declared at inception." },
+              "sum_insured": { "type": "string", "description": "Sum insured for this member." },
+              "base_sum_insured": { "type": "string", "description": "Base sum insured (Niva Bupa floater)." },
+              "safeguard_plus_si": { "type": "string", "description": "Safeguard+ sum insured (Niva Bupa)." },
+              "booster_plus_si": { "type": "string", "description": "Booster+ sum insured (Niva Bupa)." },
+              "total_sum_insured": { "type": "string", "description": "Total sum insured incl. add-ons/bonuses." },
+              "live_healthy_discount_pct": { "type": "string", "description": "Live Healthy discount % (Niva Bupa)." },
+              "pa_opted": { "type": "string", "description": "Personal Accident cover opted (Yes/No)." },
+              "renewal_benefit": { "type": "string", "description": "Renewal benefit / NCB / multiplier accrual for this member." },
+              "insured_since": { "type": "string", "description": "Date the member has been insured with this insurer (TATA AIG)." },
+              "abha_number": { "type": "string", "description": "ABHA (health account) number." },
+              "health_multiplier_rider_si": { "type": "string", "description": "Health Multiplier Rider sum insured (TATA AIG)." },
+              "supercharge_bonus": { "type": "string", "description": "Cumulative / Supercharge bonus amount." },
+              "no_claim_discount_opted": { "type": "string", "description": "No Claim Discount opted (Yes/No)." },
+              "aggregate_deductible": { "type": "string", "description": "Aggregate deductible for this member." },
+              "maternity_care": { "type": "string", "description": "Maternity care opted (Yes/No)." },
+              "maternity_wp_reduction": { "type": "string", "description": "Reduction of maternity waiting period (Yes/No)." },
+              "favourable_experience_discount_pct": { "type": "string", "description": "Favourable Experience Discount % (TATA AIG)." },
+              "id_card_number": { "type": "string", "description": "ID card number (Star Health)." },
+              "no_claim_bonus": { "type": "string", "description": "No claim bonus / cumulative bonus / super NCB for this member." },
+              "optional_cover_deductible": { "type": "string", "description": "Optional cover (deductible) flag (Star Health)." },
+              "deductible_amount": { "type": "string", "description": "Deductible amount for this member." },
+              "inception_date": { "type": "string", "description": "Inception date for this member's cover." }
+            },
+            "required": ["member_name", "dob", "age", "relationship", "sum_insured"]
+          }
+        },
+        "nominee_name": { "type": "string", "description": "Nominee name." },
+        "nominee_relationship": { "type": "string", "description": "Nominee relationship with the policyholder." },
+        "nominee_age": { "type": "string", "description": "Nominee age." },
+        "nominee_share_pct": { "type": "string", "description": "Nominee share percentage." }
+      },
+      "required": ["proposer_name", "members", "nominee_name", "nominee_relationship"]
+    },
+
+    "sum_insured_and_premium": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "base_sum_insured": { "type": "string", "description": "Base / individual sum insured (per member or floater)." },
+        "optional_rider_sum_insured": { "type": "string", "description": "Optional / rider / add-on sum insured (Critical Illness, PA, etc.)." },
+        "total_sum_insured": { "type": "string", "description": "Total sum insured including bonuses or multiplier benefits." },
+        "multiplier_benefit_si": { "type": "string", "description": "Multiplier Benefit sum insured (Niva Bupa add-on SI)." },
+        "protector_rider_si": { "type": "string", "description": "Protector Rider sum insured (Niva Bupa)." },
+        "net_premium": { "type": "string", "description": "Net premium excluding tax." },
+        "underwriting_loadings": { "type": "string", "description": "Underwriting loadings on premium (TATA AIG)." },
+        "discounts": { "type": "string", "description": "Discounts applied to premium." },
+        "gst_tax_amount": { "type": "string", "description": "GST / tax amount." },
+        "cgst_9_pct": { "type": "string", "description": "CGST @ 9% component." },
+        "sgst_9_pct": { "type": "string", "description": "SGST @ 9% component." },
+        "stamp_duty": { "type": "string", "description": "Stamp duty amount." },
+        "base_premium": { "type": "string", "description": "Base premium before tax (Star Health breakdown)." },
+        "gross_total_premium": { "type": "string", "description": "Gross / total premium payable." },
+        "premium_payment_mode": { "type": "string", "description": "Mode / frequency of premium payment." },
+        "premium_loading_reason": { "type": "string", "description": "Reason for any loading on premium." }
+      },
+      "required": [
+        "base_sum_insured",
+        "total_sum_insured",
+        "net_premium",
+        "gst_tax_amount",
+        "gross_total_premium"
+      ]
+    },
+
+    "hospitalisation_and_core_benefits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inpatient_hospitalisation": { "type": "string", "description": "In-patient hospitalisation (min 24 hrs) coverage and any sub-limits." },
+        "room_rent_limit": { "type": "string", "description": "Room rent / bed charges limit per day (Single AC / Shared / % of SI)." },
+        "icu_limit": { "type": "string", "description": "ICU / ICCU charges limit per day." },
+        "pre_hospitalisation_days": { "type": "string", "description": "Pre-hospitalisation expense coverage duration in days." },
+        "post_hospitalisation_days": { "type": "string", "description": "Post-hospitalisation expense coverage duration in days." },
+        "day_care_procedures": { "type": "string", "description": "Day care procedures coverage and list if specified." },
+        "domiciliary_hospitalisation": { "type": "string", "description": "Domiciliary / home hospitalisation coverage and conditions." },
+        "ayush_treatment": { "type": "string", "description": "AYUSH treatment coverage and limit." },
+        "organ_donor_expenses": { "type": "string", "description": "Organ donor expenses coverage and limit." },
+        "ground_ambulance_cover": { "type": "string", "description": "Ground ambulance cover limit per hospitalisation." },
+        "air_ambulance_cover": { "type": "string", "description": "Emergency air ambulance cover limit." },
+        "bariatric_surgery": { "type": "string", "description": "Bariatric surgery coverage and conditions." },
+        "consumables_benefit": { "type": "string", "description": "Consumables / non-medical items benefit." },
+        "home_care_treatment": { "type": "string", "description": "Home care treatment coverage and limit." }
+      },
+      "required": [
+        "inpatient_hospitalisation",
+        "room_rent_limit",
+        "icu_limit",
+        "pre_hospitalisation_days",
+        "post_hospitalisation_days",
+        "day_care_procedures",
+        "domiciliary_hospitalisation",
+        "ayush_treatment",
+        "ground_ambulance_cover",
+        "air_ambulance_cover"
+      ]
+    },
+
+    "value_added_and_wellness_benefits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "restoration_refill_benefit": { "type": "string", "description": "Restoration / refill benefit — trigger, quantum, frequency, conditions." },
+        "unlimited_restore_benefit": { "type": "string", "description": "Unlimited restore benefit (Yes/No and description)." },
+        "no_claim_bonus": { "type": "string", "description": "No Claim Bonus / Cumulative Bonus — percentage per year and max cap." },
+        "super_ncb_multiplier_benefit": { "type": "string", "description": "Super NCB / Multiplier benefit — how it works." },
+        "annual_health_checkup": { "type": "string", "description": "Annual health check-up — eligibility and frequency." },
+        "preventive_health_checkup": { "type": "string", "description": "Preventive health check-up scope." },
+        "opd_benefit": { "type": "string", "description": "OPD benefit — covered and annual limit." },
+        "teleconsultation": { "type": "string", "description": "Teleconsultation / e-consultation coverage and number of sessions." },
+        "mental_illness_treatment": { "type": "string", "description": "Mental illness / psychiatric treatment coverage and limits." },
+        "second_medical_opinion": { "type": "string", "description": "Second medical opinion / e-opinion coverage." },
+        "maternity_benefit": { "type": "string", "description": "Maternity benefit (normal & caesarean) — limits and waiting period." },
+        "new_born_baby_cover": { "type": "string", "description": "New born baby cover — from birth, days, limit." },
+        "new_born_vaccination": { "type": "string", "description": "Vaccination for new born — covered or not." },
+        "infertility_treatment": { "type": "string", "description": "Infertility / assisted reproduction treatment coverage and conditions." },
+        "daily_hospital_cash": { "type": "string", "description": "Daily hospital cash — amount per day and maximum days." },
+        "personal_accident_cover": { "type": "string", "description": "Personal accident cover — Death / PTD / PPD / TTD limits and terms." },
+        "critical_illness_rider": { "type": "string", "description": "Critical illness rider — diseases, waiting period, payout." },
+        "health_returns_pct": { "type": "string", "description": "HealthReturns / wellness premium-back percentage (Aditya Birla)." },
+        "chronic_management_program": { "type": "string", "description": "Chronic Management Program coverage (Aditya Birla)." },
+        "reload_benefit": { "type": "string", "description": "Reload of sum insured benefit (Aditya Birla)." },
+        "modern_treatment": { "type": "string", "description": "Modern treatment coverage limit." },
+        "rehabilitation_pain_management": { "type": "string", "description": "Rehabilitation & pain management coverage." }
+      },
+      "required": [
+        "restoration_refill_benefit",
+        "no_claim_bonus",
+        "annual_health_checkup",
+        "maternity_benefit",
+        "personal_accident_cover",
+        "critical_illness_rider"
+      ]
+    },
+
+    "waiting_periods": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initial_waiting_period": { "type": "string", "description": "Initial / first-year waiting period (30/90 days) and exempt illnesses." },
+        "ped_waiting_period": { "type": "string", "description": "Pre-existing disease (PED) waiting period in months/years." },
+        "specific_disease_waiting_period": { "type": "string", "description": "Specific / named disease waiting period — diseases and duration." },
+        "maternity_waiting_period": { "type": "string", "description": "Maternity benefit waiting period if applicable." },
+        "first_year_exclusions": { "type": "string", "description": "First-year exclusions (Star Health)." },
+        "first_two_year_exclusion": { "type": "string", "description": "First two-year exclusion (Star Health)." },
+        "waiting_period_waiver": { "type": "string", "description": "Waiver of waiting period on portability or specific conditions." },
+        "waiting_periods_served_status": { "type": "string", "description": "Whether all waiting periods are already served (renewal policies)." },
+        "continuity_benefits": {
+          "type": "array",
+          "description": "Per-member continuity benefit status carried over from a prior policy.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "member_name": { "type": "string", "description": "Member name." },
+              "id_card_number": { "type": "string", "description": "Member ID card number." },
+              "wp_30_days": { "type": "string", "description": "30-day waiting period status (Waived / Not Applicable)." },
+              "exclusion_1yr": { "type": "string", "description": "First-year exclusion status." },
+              "exclusion_2yr": { "type": "string", "description": "Two-year exclusion status." },
+              "ped_status": { "type": "string", "description": "Pre-existing disease waiting period status." }
+            },
+            "required": ["member_name"]
+          }
+        }
+      },
+      "required": [
+        "initial_waiting_period",
+        "ped_waiting_period",
+        "specific_disease_waiting_period",
+        "maternity_waiting_period"
+      ]
+    },
+
+    "financial_limits_copay_deductibles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "copayment_percentage": { "type": "string", "description": "Co-payment percentage if applicable." },
+        "copayment_conditions": { "type": "string", "description": "Conditions triggering co-pay (age / city / hospital tier / PED)." },
+        "deductible": { "type": "string", "description": "Compulsory / voluntary / optional deductible amount and conditions." },
+        "aggregate_deductible": { "type": "string", "description": "Aggregate / cumulative deductible threshold (Super Top-up)." },
+        "sub_limits": { "type": "string", "description": "Sub-limits on specific treatments or procedures." },
+        "proportionate_deduction": { "type": "string", "description": "Whether proportionate deduction (room-rent linkage) applies." },
+        "disease_wise_limits": { "type": "string", "description": "Disease-wise / ailment-wise sub-limits." },
+        "optional_deductible_table": {
+          "type": "array",
+          "description": "Optional deductible discount table by sum insured slab.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "sum_insured_slab": { "type": "string", "description": "Sum insured slab." },
+              "deductible": { "type": "string", "description": "Deductible amount for the slab." },
+              "discount_pct": { "type": "string", "description": "Premium discount percentage for the slab." }
+            },
+            "required": ["sum_insured_slab", "deductible", "discount_pct"]
+          }
+        }
+      },
+      "required": [
+        "copayment_percentage",
+        "copayment_conditions",
+        "deductible",
+        "sub_limits",
+        "proportionate_deduction"
+      ]
+    },
+
+    "network_claims_tpa": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claim_administrator": { "type": "string", "description": "Claim administrator (In-house / TPA name)." },
+        "cashless_facility": { "type": "string", "description": "Cashless facility availability and approx. network hospital count." },
+        "pre_authorisation_process": { "type": "string", "description": "Pre-authorisation process for planned hospitalisation — notice hours." },
+        "emergency_cashless_process": { "type": "string", "description": "Emergency cashless process steps." },
+        "reimbursement_process": { "type": "string", "description": "Reimbursement process — documents required and submission deadline." },
+        "claim_settlement_ratio": { "type": "string", "description": "Claim settlement ratio of the insurer (latest available)." },
+        "grievance_redressal": { "type": "string", "description": "Grievance redressal contact and turnaround time." },
+        "portability_provisions": { "type": "string", "description": "Portability provisions — whether the policy is portable." }
+      },
+      "required": [
+        "claim_administrator",
+        "cashless_facility",
+        "pre_authorisation_process",
+        "reimbursement_process",
+        "portability_provisions"
+      ]
+    },
+
+    "exclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "permanent_exclusions": { "type": "array", "items": { "type": "string" }, "description": "Permanent / absolute exclusions (never covered)." },
+        "temporary_exclusions": { "type": "array", "items": { "type": "string" }, "description": "Temporary exclusions (covered after a waiting period)." },
+        "lifestyle_disease_exclusions": { "type": "string", "description": "Lifestyle disease exclusions (obesity, alcohol, substance abuse)." },
+        "cosmetic_treatment_exclusions": { "type": "string", "description": "Cosmetic / aesthetic treatment exclusions." },
+        "hazardous_activity_exclusions": { "type": "string", "description": "Exclusions for injury from hazardous activities." },
+        "war_nuclear_radiation_exclusions": { "type": "string", "description": "War, nuclear and radiation exclusions." },
+        "self_inflicted_injury_exclusions": { "type": "string", "description": "Self-inflicted injury / suicide exclusions." },
+        "dental_optical_exclusions": { "type": "string", "description": "Dental and optical exclusions (unless hospitalisation required)." },
+        "policy_specific_exclusions": { "type": "array", "items": { "type": "string" }, "description": "Policy-specific exclusions not standard across the industry." },
+        "key_exclusions": { "type": "array", "items": { "type": "string" }, "description": "Summarised list of the key exclusions of the policy." }
+      },
+      "required": ["permanent_exclusions", "key_exclusions"]
+    },
+
+    "renewal_and_continuity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "renewal_guarantee": { "type": "string", "description": "Renewal guarantee / lifetime renewal clause." },
+        "grace_period": { "type": "string", "description": "Grace period for renewal (days)." },
+        "mid_term_additions": { "type": "string", "description": "Whether mid-term additions are allowed (new members, SI change)." },
+        "free_look_period": { "type": "string", "description": "Free-look period." },
+        "portability_availability": { "type": "string", "description": "Portability availability and conditions." },
+        "reinstatement_after_lapse": { "type": "string", "description": "Reinstatement after lapse — possible and under what conditions." }
+      },
+      "required": ["renewal_guarantee", "grace_period", "free_look_period"]
+    },
+
+    "riders_and_addons": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "riders_opted": {
+          "type": "array",
+          "description": "All optional covers / riders opted under this policy.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "package_name": { "type": "string", "description": "Rider package name." },
+              "rider_name": { "type": "string", "description": "Rider name (with UIN if shown)." },
+              "cover_name": { "type": "string", "description": "Cover / benefit name." },
+              "coverage_limit": { "type": "string", "description": "Coverage limit for the rider." },
+              "premium": { "type": "string", "description": "Premium charged for the rider." }
+            },
+            "required": ["rider_name"]
+          }
+        },
+        "international_emergency_cover": { "type": "string", "description": "International / overseas emergency cover — limit and conditions." },
+        "inflation_protector": { "type": "string", "description": "Inflation protector / sum insured enhancement if opted." },
+        "room_rent_waiver": { "type": "string", "description": "Room rent waiver if opted." },
+        "other_addons": { "type": "string", "description": "Other bespoke add-ons specific to this insurer's product." },
+        "portability_details": {
+          "type": "array",
+          "description": "Portability details from the previous insurer, per member.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "member_name": { "type": "string", "description": "Member name." },
+              "previous_insurer": { "type": "string", "description": "Previous insurer name." },
+              "previous_policy_number": { "type": "string", "description": "Previous policy number." },
+              "previous_inception": { "type": "string", "description": "Previous insurer policy inception date." },
+              "sum_insured": { "type": "string", "description": "Sum insured under the previous policy." },
+              "claims": { "type": "string", "description": "Claim details under the previous policy, if any." }
+            },
+            "required": ["member_name"]
+          }
+        },
+        "wellness_rewards": {
+          "type": "array",
+          "description": "Wellness reward details for renewal policies, per member.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "member_name": { "type": "string", "description": "Member name." },
+              "si_with_cb": { "type": "string", "description": "Sum insured inclusive of cumulative bonus." },
+              "wp_30_days": { "type": "string", "description": "30-day waiting period status." },
+              "exclusion_2yr": { "type": "string", "description": "Two-year exclusion status." },
+              "ped_status": { "type": "string", "description": "Pre-existing disease waiting period status." }
+            },
+            "required": ["member_name"]
+          }
+        }
+      },
+      "required": ["riders_opted"]
+    },
+  },
+  "required": [
+    "policy_identity",
+    "policyholder_and_members",
+    "sum_insured_and_premium",
+    "hospitalisation_and_core_benefits",
+    "value_added_and_wellness_benefits",
+    "waiting_periods",
+    "financial_limits_copay_deductibles",
+    "network_claims_tpa",
+    "exclusions",
+    "renewal_and_continuity",
+    "riders_and_addons",
+    "advisor_assessment"
+  ]
+}
