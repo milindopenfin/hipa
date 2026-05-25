@@ -15,8 +15,14 @@ Cross-refs: [02 — Architecture overview](02-architecture-overview.md),
 
 | Layer | Choice | Why |
 |---|---|---|
-| Backend language | **Go** | Stated preference; single static binary; great concurrency primitives for the multi-agent fan-out; strong stdlib for HTTP/queue/crypto |
-| API framework | `chi` or `echo` (TBD) | Small, idiomatic Go HTTP routers. `chi` preferred for stdlib affinity |
+| Control-plane language | **Go** | Single static binary; goroutines fit the multi-agent fan-out exactly; strong stdlib for HTTP/queue/crypto; cheap deploy & rollback |
+| AI/document-plane language | **Python** | First-class ecosystem for PDF→markdown (markitdown/marker/Unstructured), OCR (Tesseract/Paddle), cross-encoder rerankers, embeddings, Pydantic/Instructor for structured extraction |
+| RPC — typed legs (SPA↔Go, Go↔Go) | **webrpc** (RIDL) | One schema → typed TS client + typed Go server; no protobuf/HTTP/2 baggage; named errors map to our flag taxonomy |
+| RPC — Python boundary (Go↔ai-py) | **OpenAPI** | FastAPI emits OpenAPI for free; mature Python codegen (`openapi-python-client`, `datamodel-code-generator` for Pydantic); webrpc-py is not yet first-class |
+| Live updates (SPA job progress) | **SSE** (handwritten alongside webrpc) | webrpc is request/response only; SSE handles the one-way streaming case |
+| File upload | **Presigned S3 PUT** | API never proxies bytes |
+| API framework (Go) | `chi` | Stdlib affinity; pairs cleanly with webrpc-generated handlers |
+| API framework (Python) | `FastAPI` | Pydantic-native; emits OpenAPI as the source of truth for the Python boundary |
 | Backend job runtime | In-process workers + Mongo-backed work queue | Simplest viable; revisit if hot |
 | Frontend language | **TypeScript** | Stated preference; non-negotiable |
 | Frontend framework | **React 19** (or Next.js if SSR matters; default to plain React + Vite) | Stated preference: "Some flavour of React"; Vite for fastest dev loop; switch to Next.js only if SSR becomes a need |
@@ -36,48 +42,142 @@ Cross-refs: [02 — Architecture overview](02-architecture-overview.md),
 
 ---
 
-## Why Go specifically
+## Why this language split
 
-The pipeline is dominated by:
+The backend cleaves cleanly into two planes with different ecosystem needs:
+
+**Control plane (Go).** Dominated by:
 
 - HTTP fan-out to LLM providers (concurrent, latency-sensitive)
 - JSON shuffling (schema, citations, jobs)
-- File handling (uploads, S3, PDF parsing)
-- Long-running workers with backpressure
+- Long-running workers with back-pressure
+- Auth, RBAC, rate limiting
 
-Go is good at all four. Compared to Node:
+Go is best-in-class for all of these. Single static binary, strong stdlib,
+goroutines + channels map directly onto the L0/L1 orchestration design in
+[04 — Multi-agent orchestration](04-multi-agent-orchestration.md).
 
-- Strong types matter when you're moving schemas around as data.
-- Single static binary makes deploy/rollback trivial.
-- Excellent stdlib for everything we need.
+**AI/document plane (Python).** Dominated by:
 
-Compared to Python:
+- PDF → hierarchical markdown (markitdown / marker / Unstructured)
+- OCR (Tesseract / PaddleOCR) with preprocessing
+- Hybrid retrieval + cross-encoder reranking (sentence-transformers,
+  FlagEmbedding)
+- Structured extraction patterns (Pydantic, Instructor)
 
-- Better concurrency story for the orchestrator and queue workers.
-- We still keep Python around as a *sidecar* for things Go's ecosystem
-  lacks (specifically the document-parsing front end if `markitdown`
-  remains the cleanest option).
+These are the parts of the system where Go would be reinventing tooling
+that already exists, mature, in Python. Critically, the LLM calls
+themselves live in the **Go** LLM gateway — Python's role here is local
+document processing and retrieval, not model orchestration.
+
+**TypeScript stays on the SPA only.** It would lose to Go on the control
+plane (deploy ops, fan-out, queue workers) and to Python on the AI plane.
+The one TS upside — shared types with the backend — is recovered by
+codegen from the schema directory rather than a shared runtime.
 
 ---
 
 ## Service decomposition
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ api-gateway        (Go)   stateless · horizontally scaled│
-│ orchestrator       (Go)   queue consumer · workers       │
-│ llm-gateway        (Go)   provider routing · rate limits │
-│ ingest-svc         (Go + Python sidecar for parsing/OCR) │
-│ render-svc         (Chromium + small Go wrapper)         │
-│ chroma             (off-the-shelf)                       │
-│ mongo              (off-the-shelf)                       │
-│ s3                 (off-the-shelf)                       │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ core-go            (Go)   one binary, role-toggled by env:       │
+│                            · api-gateway role                    │
+│                            · orchestrator role                   │
+│                            · llm-gateway (in-process MVP)        │
+│ ai-py              (Python / FastAPI)   one service, two routes: │
+│                            · /v1/ingest   PDF → tree, OCR        │
+│                            · /v1/retrieve hybrid RAG + rerank    │
+│ render-svc         (Chromium + small Go wrapper via ChromeDP)    │
+│ chroma             (off-the-shelf)                               │
+│ mongo              (off-the-shelf)                               │
+│ s3 / MinIO         (off-the-shelf)                               │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-The api-gateway and orchestrator can be the **same binary** in MVP,
-configured by env to run one or both roles. We split only when scaling
-dictates.
+**Deployment principle:** logical services, deployable as one or many.
+Boundaries are network-shaped from day one (so splits are mechanical
+later), but everything that can collocate, does, until scaling dictates
+otherwise.
+
+| Phase | What splits out | What stays collocated |
+|---|---|---|
+| MVP | `core-go` (multi-role binary), `ai-py`, `render-svc`, data plane | `llm-gateway` lives inside `core-go`; ingest + rag live inside `ai-py` |
+| Scale v1 | `llm-gateway` becomes its own Go service (rate-limit state goes global, Redis-backed) | rest unchanged |
+| Scale v2 | Split `rag-svc` from `ingest-svc` inside `ai-py` (different load profiles) | — |
+| Scale v3 | Multiple `render-svc` workers behind a queue | — |
+
+The api-gateway and orchestrator are roles inside the same `core-go`
+binary — `core-go --role=gateway`, `--role=orchestrator`, or both. We
+split only when scaling dictates.
+
+---
+
+## How services communicate
+
+One protocol per channel, chosen for the shape of the traffic:
+
+| Channel | Protocol | Notes |
+|---|---|---|
+| SPA ↔ `core-go` (RPC) | **webrpc** (RIDL) | Typed TS client + Go server; named errors |
+| SPA ↔ `core-go` (job progress) | **SSE** | Handwritten endpoint next to webrpc routes |
+| SPA → S3 | **Presigned PUT** | API never proxies bytes |
+| `core-go` internal (gateway ↔ orchestrator ↔ llm-gateway) | **In-process** in MVP | Same binary; Mongo job queue is the real boundary |
+| `core-go` ↔ `ai-py` | **OpenAPI / HTTP+JSON** | FastAPI emits the spec; Go client via `oapi-codegen`, Python models via `datamodel-code-generator` |
+| `core-go` ↔ `render-svc` | **webrpc** | Both Go; result lands in S3, key returned |
+| Any service ↔ Mongo / S3 / Chroma | Native client libs | Shared data plane |
+
+### Why webrpc
+
+- Schema-first like gRPC, but the wire format is plain HTTP+JSON —
+  inspectable in browser devtools, no HTTP/2 dependency, no protobuf
+  toolchain.
+- The TS↔Go boundary is exactly its sweet spot: one RIDL produces a typed
+  TS client and a typed Go handler interface in lockstep.
+- Errors are declared in the schema and surface as typed values in both
+  languages — maps cleanly onto our flag taxonomy
+  (`PASSWORD_REQUIRED`, `INSUFFICIENT_EVIDENCE`, `LOW_TRUST_SOURCE`, …).
+
+### Why OpenAPI for the Python boundary
+
+webrpc's Python generator is community-quality and trails the Go/TS
+targets. The Go↔`ai-py` interface is narrow (~5 endpoints) and slow-
+changing — exactly where OpenAPI's mature Python tooling shines.
+FastAPI emits the spec automatically; we never write OpenAPI YAML
+by hand.
+
+This is the **hybrid** approach. Re-evaluate end-to-end webrpc if the
+Python generator reaches parity by the time we need to bump versions.
+
+### Schemas as the load-bearing artifact
+
+```
+schemas/
+├── data/                  # shared data shapes (JSON Schema)
+│   ├── health_insurance_extraction.json
+│   ├── tree.schema.json
+│   ├── citation.schema.json
+│   └── job.schema.json
+├── webrpc/                # RPC contracts (RIDL)
+│   ├── api-gateway.ridl   # SPA ↔ Go
+│   ├── llm-gateway.ridl   # Go ↔ Go (used when split)
+│   └── render-svc.ridl    # Go ↔ Go
+└── openapi/               # contracts to/from Python
+    ├── ingest-svc.yaml    # Go ↔ Python
+    └── rag-svc.yaml       # Go ↔ Python
+```
+
+Single source of truth for every type that crosses a service boundary:
+
+- Go structs from `oapi-codegen` (OpenAPI) and webrpc-gen (RIDL).
+- Pydantic models from `datamodel-code-generator` (OpenAPI) +
+  `datamodel-code-generator --input-file-type jsonschema` for the
+  shared data shapes.
+- TS types from webrpc-gen (RIDL).
+
+`schema_version` per
+[07 — Extraction schema spec](07-extraction-schema-spec.md); bumps are
+code review.
 
 ---
 
@@ -195,18 +295,21 @@ plus the cost telemetry in [11](11-llm-provider-abstraction.md).
 
 ## Open questions for the build phase
 
-1. **`markitdown` vs `marker` vs a Go-native PDF→md** — benchmark on
-   ≥50 Indian insurance PDFs and pick. Criteria: table fidelity,
-   heading extraction accuracy, speed, dependencies.
+1. **`markitdown` vs `marker` vs Unstructured** — benchmark on ≥50
+   Indian insurance PDFs and pick. Criteria: table fidelity, heading
+   extraction accuracy, speed, dependencies. All three are Python and
+   live inside `ai-py`.
 2. **ChromeDP vs Playwright sidecar** for PDF rendering. ChromeDP is
-   simpler; Playwright is more battle-tested. Benchmark.
+   simpler and keeps `render-svc` in Go; Playwright is more battle-tested
+   on tricky CSS. Lean Go unless benchmarks force the switch.
 3. **In-process workers vs sidecar workers.** Start in-process for
    simplicity; split if cold-start or GC tuning becomes a pain.
-4. **OpenAPI vs typespec for the client SDK generation.** Either
-   works; team familiarity wins.
-5. **Embedding model.** OpenAI `text-embedding-3-large` vs `bge-large`
-   (self-hosted) vs `nomic-embed-text` (Ollama, free). Benchmark on
-   retrieval precision over a held-out doc set.
+4. **Embedding model.** OpenAI `text-embedding-3-large` vs `bge-large`
+   (self-hosted in `ai-py`) vs `nomic-embed-text` (Ollama, free).
+   Benchmark on retrieval precision over a held-out doc set.
+5. **Reranker.** `bge-reranker-v2-m3` in-process in `ai-py` vs Cohere
+   Rerank vs Voyage. In-process is free and controllable; hosted is one
+   less model dependency. Benchmark on the same corpus as #4.
 
 None of these are blockers for the architecture in this docs folder.
 Each is a localized decision the build can make without rearranging the

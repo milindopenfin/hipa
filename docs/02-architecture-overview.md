@@ -18,12 +18,13 @@ Cross-refs: [03 — Modular domain system](03-modular-domain-system.md),
  └────────────────────────────────────────────────────────────────────┘
                               │
  ┌────────────────────────────────────────────────────────────────────┐
- │  L2 — API gateway (Go)                                             │
+ │  L2 — API gateway (Go, role of `core-go`)                          │
  │  Better Auth · RBAC · rate limit · request routing · idempotency   │
+ │  webrpc to the SPA · SSE for live job progress                     │
  └────────────────────────────────────────────────────────────────────┘
                               │
  ┌────────────────────────────────────────────────────────────────────┐
- │  L3 — Orchestrator                                                 │
+ │  L3 — Orchestrator (Go, role of `core-go`)                         │
  │  Domain dispatch · job lifecycle · cache lookup · retry policy     │
  └────────────────────────────────────────────────────────────────────┘
                               │
@@ -110,9 +111,18 @@ S3 (the API never proxies bytes). Streams job progress via SSE. Renders
 the side-by-side citation view (analysis on the left, PDF on the right
 with highlights). Has its own feedback widget per analysis section.
 
-**API gateway.** Go. Single binary. Owns auth (Better Auth), RBAC, request
-validation, idempotency keys, rate limiting. Stateless — horizontal
-scaling is just more pods.
+**API gateway.** Go, a role of the `core-go` binary. Owns auth (Better
+Auth), RBAC, request validation, idempotency keys, rate limiting. Talks
+to the SPA via **webrpc** (typed RPC over HTTP+JSON) with **SSE** for
+job progress. Stateless — horizontal scaling is just more pods.
+
+**AI/document plane (`ai-py`).** Python (FastAPI). One service that
+exposes `/v1/ingest` (PDF → markdown tree, OCR, password unlock,
+per-page rasters, metadata pre-pass) and `/v1/retrieve` (hybrid BM25 +
+dense + RRF + cross-encoder rerank + section-scoped expansion). Lives
+in Python because the document-processing and reranking ecosystem is
+overwhelmingly Python; the LLM calls themselves stay in the Go
+llm-gateway. Talks to `core-go` via **OpenAPI / HTTP+JSON**.
 
 **Orchestrator.** Go process that consumes the job queue. On a new analysis
 it: (1) confirms cache miss for `(content_hash, domain, schema_version,
